@@ -6,6 +6,21 @@ class Match {
   final int scoreB;
   final DateTime matchDate;
   final String? notes;
+  // Additional analysis data
+  final int? possessionA;
+  final int? possessionB;
+  final int? shotsA;
+  final int? shotsB;
+  final int? shotsOnTargetA;
+  final int? shotsOnTargetB;
+  final int? passesA;
+  final int? passesB;
+  final int? passAccuracyA;
+  final int? passAccuracyB;
+  final int? foulsA;
+  final int? foulsB;
+  final int? cornersA;
+  final int? cornersB;
 
   Match({
     this.id,
@@ -15,6 +30,20 @@ class Match {
     required this.scoreB,
     required this.matchDate,
     this.notes,
+    this.possessionA,
+    this.possessionB,
+    this.shotsA,
+    this.shotsB,
+    this.shotsOnTargetA,
+    this.shotsOnTargetB,
+    this.passesA,
+    this.passesB,
+    this.passAccuracyA,
+    this.passAccuracyB,
+    this.foulsA,
+    this.foulsB,
+    this.cornersA,
+    this.cornersB,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,6 +55,20 @@ class Match {
       'scoreB': scoreB,
       'matchDate': matchDate.toIso8601String(),
       'notes': notes,
+      'possessionA': possessionA,
+      'possessionB': possessionB,
+      'shotsA': shotsA,
+      'shotsB': shotsB,
+      'shotsOnTargetA': shotsOnTargetA,
+      'shotsOnTargetB': shotsOnTargetB,
+      'passesA': passesA,
+      'passesB': passesB,
+      'passAccuracyA': passAccuracyA,
+      'passAccuracyB': passAccuracyB,
+      'foulsA': foulsA,
+      'foulsB': foulsB,
+      'cornersA': cornersA,
+      'cornersB': cornersB,
     };
   }
 
@@ -38,6 +81,20 @@ class Match {
       scoreB: map['scoreB'] as int,
       matchDate: DateTime.parse(map['matchDate'] as String),
       notes: map['notes'] as String?,
+      possessionA: map['possessionA'] as int?,
+      possessionB: map['possessionB'] as int?,
+      shotsA: map['shotsA'] as int?,
+      shotsB: map['shotsB'] as int?,
+      shotsOnTargetA: map['shotsOnTargetA'] as int?,
+      shotsOnTargetB: map['shotsOnTargetB'] as int?,
+      passesA: map['passesA'] as int?,
+      passesB: map['passesB'] as int?,
+      passAccuracyA: map['passAccuracyA'] as int?,
+      passAccuracyB: map['passAccuracyB'] as int?,
+      foulsA: map['foulsA'] as int?,
+      foulsB: map['foulsB'] as int?,
+      cornersA: map['cornersA'] as int?,
+      cornersB: map['cornersB'] as int?,
     );
   }
 
@@ -49,6 +106,20 @@ class Match {
     int? scoreB,
     DateTime? matchDate,
     String? notes,
+    int? possessionA,
+    int? possessionB,
+    int? shotsA,
+    int? shotsB,
+    int? shotsOnTargetA,
+    int? shotsOnTargetB,
+    int? passesA,
+    int? passesB,
+    int? passAccuracyA,
+    int? passAccuracyB,
+    int? foulsA,
+    int? foulsB,
+    int? cornersA,
+    int? cornersB,
   }) {
     return Match(
       id: id ?? this.id,
@@ -58,6 +129,20 @@ class Match {
       scoreB: scoreB ?? this.scoreB,
       matchDate: matchDate ?? this.matchDate,
       notes: notes ?? this.notes,
+      possessionA: possessionA ?? this.possessionA,
+      possessionB: possessionB ?? this.possessionB,
+      shotsA: shotsA ?? this.shotsA,
+      shotsB: shotsB ?? this.shotsB,
+      shotsOnTargetA: shotsOnTargetA ?? this.shotsOnTargetA,
+      shotsOnTargetB: shotsOnTargetB ?? this.shotsOnTargetB,
+      passesA: passesA ?? this.passesA,
+      passesB: passesB ?? this.passesB,
+      passAccuracyA: passAccuracyA ?? this.passAccuracyA,
+      passAccuracyB: passAccuracyB ?? this.passAccuracyB,
+      foulsA: foulsA ?? this.foulsA,
+      foulsB: foulsB ?? this.foulsB,
+      cornersA: cornersA ?? this.cornersA,
+      cornersB: cornersB ?? this.cornersB,
     );
   }
 }

@@ -771,25 +771,92 @@ class _HomePageState extends State<HomePage> {
             isPrimary: false,
             onPressed: () async {
             final provider = Provider.of<MatchProvider>(context, listen: false);
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(_primaryGold),
+                ),
+              ),
+            );
+            
             final data = await provider.fetchMatchDataFromAPI();
+            Navigator.pop(context); // Close loading dialog
+            
             if (data != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: _darkBackground),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text('API call successful! Data fetched.'),
-                      ),
-                    ],
-                  ),
-                  backgroundColor: _primaryGold,
-                  behavior: SnackBarBehavior.floating,
+              // Show API data in a dialog
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: _cardDark,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  duration: Duration(seconds: 3),
+                  title: ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [_primaryGold, _accentAmber],
+                    ).createShader(bounds),
+                    child: Text(
+                      'API DATA FETCHED',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (data['homeTeam'] != null) ...[
+                          _buildApiDataRow('Home Team', data['homeTeam']),
+                          _buildApiDataRow('Away Team', data['awayTeam']),
+                        ],
+                        if (data['score'] != null && data['score']['fullTime'] != null) ...[
+                          _buildApiDataRow('Score', 
+                            '${data['score']['fullTime']['home']} - ${data['score']['fullTime']['away']}'),
+                        ],
+                        if (data['competition'] != null)
+                          _buildApiDataRow('Competition', data['competition']),
+                        if (data['status'] != null)
+                          _buildApiDataRow('Status', data['status']),
+                        if (data['statistics'] != null) ...[
+                          SizedBox(height: 12),
+                          Divider(color: _textSecondary.withOpacity(0.2)),
+                          SizedBox(height: 12),
+                          Text(
+                            'Statistics:',
+                            style: TextStyle(
+                              color: _primaryGold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          if (data['statistics']['possession'] != null)
+                            _buildApiDataRow('Possession', 
+                              '${data['statistics']['possession']['home']}% - ${data['statistics']['possession']['away']}%'),
+                          if (data['statistics']['shots'] != null)
+                            _buildApiDataRow('Shots', 
+                              '${data['statistics']['shots']['home']} - ${data['statistics']['shots']['away']}'),
+                        ],
+                        _buildApiDataRow('Fetched At', 
+                          DateTime.parse(data['fetchedAt']).toString().substring(0, 19)),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Close',
+                        style: TextStyle(color: _primaryGold),
+                      ),
+                    ),
+                  ],
                 ),
               );
             } else {
@@ -884,6 +951,32 @@ class _HomePageState extends State<HomePage> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ],
+    );
+  }
+
+  Widget _buildApiDataRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1081,6 +1174,32 @@ class _MatchAnalysisPageState extends State<MatchAnalysisPage> {
     );
   }
 
+  Widget _buildApiDataRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: _textSecondary,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: _textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummaryRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1219,11 +1338,41 @@ class _MatchAnalysisPageState extends State<MatchAnalysisPage> {
             ],
           ),
           SizedBox(height: 28),
-          _buildStatRow('Possession', 'Team A 54%', 'Team B 46%', 54),
+          if (match.possessionA != null && match.possessionB != null)
+            _buildStatRow('Possession', '${match.teamA} ${match.possessionA}%', '${match.teamB} ${match.possessionB}%', match.possessionA!),
+          if (match.possessionA == null)
+            _buildStatRow('Possession', '${match.teamA} 54%', '${match.teamB} 46%', 54),
           SizedBox(height: 20),
-          _buildStatRow('Shots', '12 (A)', '8 (B)', 60),
+          if (match.shotsA != null && match.shotsB != null)
+            _buildStatRow('Shots', '${match.teamA} ${match.shotsA}', '${match.teamB} ${match.shotsB}', 
+              match.shotsA! > match.shotsB! ? 60 : 40),
+          if (match.shotsA == null)
+            _buildStatRow('Shots', '${match.teamA} 12', '${match.teamB} 8', 60),
           SizedBox(height: 20),
-          _buildStatRow('Pass Accuracy', '78%', '82%', 48),
+          if (match.shotsOnTargetA != null && match.shotsOnTargetB != null)
+            _buildStatRow('Shots on Target', '${match.teamA} ${match.shotsOnTargetA}', '${match.teamB} ${match.shotsOnTargetB}', 
+              match.shotsOnTargetA! > match.shotsOnTargetB! ? 60 : 40),
+          SizedBox(height: 20),
+          if (match.passAccuracyA != null && match.passAccuracyB != null)
+            _buildStatRow('Pass Accuracy', '${match.teamA} ${match.passAccuracyA}%', '${match.teamB} ${match.passAccuracyB}%', 
+              match.passAccuracyA! > match.passAccuracyB! ? 55 : 45),
+          if (match.passAccuracyA == null)
+            _buildStatRow('Pass Accuracy', '${match.teamA} 78%', '${match.teamB} 82%', 48),
+          if (match.passesA != null && match.passesB != null) ...[
+            SizedBox(height: 20),
+            _buildStatRow('Total Passes', '${match.teamA} ${match.passesA}', '${match.teamB} ${match.passesB}', 
+              match.passesA! > match.passesB! ? 55 : 45),
+          ],
+          if (match.foulsA != null && match.foulsB != null) ...[
+            SizedBox(height: 20),
+            _buildStatRow('Fouls', '${match.teamA} ${match.foulsA}', '${match.teamB} ${match.foulsB}', 
+              match.foulsA! < match.foulsB! ? 55 : 45),
+          ],
+          if (match.cornersA != null && match.cornersB != null) ...[
+            SizedBox(height: 20),
+            _buildStatRow('Corners', '${match.teamA} ${match.cornersA}', '${match.teamB} ${match.cornersB}', 
+              match.cornersA! > match.cornersB! ? 60 : 40),
+          ],
         ],
           ),
         );

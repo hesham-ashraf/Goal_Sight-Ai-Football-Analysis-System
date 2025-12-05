@@ -29,8 +29,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -43,9 +44,47 @@ class DatabaseHelper {
         scoreA INTEGER NOT NULL,
         scoreB INTEGER NOT NULL,
         matchDate TEXT NOT NULL,
-        notes TEXT
+        notes TEXT,
+        possessionA INTEGER,
+        possessionB INTEGER,
+        shotsA INTEGER,
+        shotsB INTEGER,
+        shotsOnTargetA INTEGER,
+        shotsOnTargetB INTEGER,
+        passesA INTEGER,
+        passesB INTEGER,
+        passAccuracyA INTEGER,
+        passAccuracyB INTEGER,
+        foulsA INTEGER,
+        foulsB INTEGER,
+        cornersA INTEGER,
+        cornersB INTEGER
       )
     ''');
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add new analysis columns if they don't exist
+      try {
+        await db.execute('ALTER TABLE matches ADD COLUMN possessionA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN possessionB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN shotsA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN shotsB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN shotsOnTargetA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN shotsOnTargetB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN passesA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN passesB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN passAccuracyA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN passAccuracyB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN foulsA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN foulsB INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN cornersA INTEGER');
+        await db.execute('ALTER TABLE matches ADD COLUMN cornersB INTEGER');
+      } catch (e) {
+        // Columns might already exist, ignore error
+      }
+    }
   }
 
   Future<int> insertMatch(Match match) async {
