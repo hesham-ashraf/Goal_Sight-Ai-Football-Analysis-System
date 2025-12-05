@@ -1,4 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'providers/match_provider.dart';
+import 'pages/add_match_page.dart';
+import 'pages/settings_page.dart';
+import 'pages/match_history_page.dart';
+import 'pages/about_page.dart';
+import 'pages/charts_page.dart';
+import 'models/match.dart';
 
 // Premium Luxury Color Palette
 const Color _primaryGold = Color(0xFFFFD700); // Rich Gold
@@ -10,14 +21,17 @@ const Color _cardLighter = Color(0xFF252530); // Lighter Dark Blue-Gray
 const Color _textPrimary = Color(0xFFFFFFFF);
 const Color _textSecondary = Color(0xFFB8B8C8);
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(GoalSightApp());
 }
 
 class GoalSightApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ChangeNotifierProvider(
+      create: (context) => MatchProvider()..loadMatches(),
+      child: MaterialApp(
       title: 'GoalSight',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -88,6 +102,7 @@ class GoalSightApp extends StatelessWidget {
         ),
       ),
       home: MainNavigation(),
+      ),
     );
   }
 }
@@ -512,7 +527,21 @@ class _MainNavigationState extends State<MainNavigation> with SingleTickerProvid
 }
 
 // ----------------- Home Page -----------------
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load matches when page is first displayed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MatchProvider>(context, listen: false).loadMatches();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -577,29 +606,79 @@ class HomePage extends StatelessWidget {
           ),
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: padding),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0.0, end: 1.0),
-                    duration: Duration(milliseconds: 600 + (index * 100)),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, child) {
-                      return Transform.translate(
-                        offset: Offset(0, 30 * (1 - value)),
-                        child: Opacity(
-                          opacity: value,
-                          child: Padding(
-                            padding: EdgeInsets.only(bottom: 16),
-                            child: _buildMatchCard(context, index),
+            sliver: Consumer<MatchProvider>(
+              builder: (context, matchProvider, child) {
+                if (matchProvider.isLoading && matchProvider.matches.isEmpty) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(_primaryGold),
+                      ),
+                    ),
+                  );
+                }
+
+                if (matchProvider.matches.isEmpty) {
+                  return SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sports_soccer_rounded,
+                            size: 64,
+                            color: _textSecondary,
                           ),
-                        ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No matches yet',
+                            style: TextStyle(
+                              color: _textSecondary,
+                              fontSize: 18,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Tap "New Match" to add one',
+                            style: TextStyle(
+                              color: _textSecondary.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final match = matchProvider.matches[index];
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 300 + (index * 50)),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 30 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: Padding(
+                                padding: EdgeInsets.only(bottom: 16),
+                                child: _buildMatchCard(context, match, index),
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-                childCount: 5,
-              ),
+                    childCount: matchProvider.matches.length,
+                  ),
+                );
+              },
             ),
           ),
           SliverPadding(padding: EdgeInsets.only(bottom: padding)),
@@ -637,36 +716,104 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, bool isSmall) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
+        Row(
+          children: [
+            Expanded(
+              child: _buildPremiumButton(
+                context,
+                icon: Icons.play_arrow_rounded,
+                label: 'Start Live',
+                isPrimary: true,
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Live mode opened'),
+                      backgroundColor: _primaryGold,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _buildPremiumButton(
+                context,
+                icon: Icons.analytics_rounded,
+                label: 'New Match',
+                isPrimary: false,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddMatchPage(),
+                    ),
+                  ).then((_) {
+                    // Refresh matches when returning from AddMatchPage
+                    Provider.of<MatchProvider>(context, listen: false).loadMatches();
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
           child: _buildPremiumButton(
             context,
-            icon: Icons.play_arrow_rounded,
-            label: 'Start Live',
-            isPrimary: true,
-            onPressed: () {
+            icon: Icons.cloud_download_rounded,
+            label: 'Test API Call',
+            isPrimary: false,
+            onPressed: () async {
+            final provider = Provider.of<MatchProvider>(context, listen: false);
+            final data = await provider.fetchMatchDataFromAPI();
+            if (data != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Live mode opened'),
+                  content: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: _darkBackground),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text('API call successful! Data fetched.'),
+                      ),
+                    ],
+                  ),
                   backgroundColor: _primaryGold,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  duration: Duration(seconds: 3),
                 ),
               );
-            },
-          ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: _buildPremiumButton(
-            context,
-            icon: Icons.analytics_rounded,
-            label: 'New Analysis',
-            isPrimary: false,
-            onPressed: () {},
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(Icons.error, color: _textPrimary),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(provider.error ?? 'API call failed'),
+                      ),
+                    ],
+                  ),
+                  backgroundColor: Colors.red[700],
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+          },
           ),
         ),
       ],
@@ -740,7 +887,8 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildMatchCard(BuildContext context, int index) {
+  Widget _buildMatchCard(BuildContext context, match, int index) {
+    final dateStr = '${match.matchDate.day}/${match.matchDate.month}/${match.matchDate.year}';
     return ModernCard(
       padding: EdgeInsets.all(20),
       onTap: () {},
@@ -781,7 +929,7 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Team A vs Team B',
+                  '${match.teamA} vs ${match.teamB}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 SizedBox(height: 8),
@@ -791,7 +939,7 @@ class HomePage extends StatelessWidget {
                         size: 16, color: _textSecondary),
                     SizedBox(width: 6),
                     Text(
-                      '2025-11-14',
+                      dateStr,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     SizedBox(width: 16),
@@ -806,7 +954,7 @@ class HomePage extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        '2 - 1',
+                        '${match.scoreA} - ${match.scoreB}',
                         style: TextStyle(
                           color: _primaryGold,
                           fontWeight: FontWeight.w800,
@@ -829,7 +977,132 @@ class HomePage extends StatelessWidget {
 }
 
 // ----------------- Match Analysis Page -----------------
-class MatchAnalysisPage extends StatelessWidget {
+class MatchAnalysisPage extends StatefulWidget {
+  @override
+  _MatchAnalysisPageState createState() => _MatchAnalysisPageState();
+}
+
+class _MatchAnalysisPageState extends State<MatchAnalysisPage> {
+  Match? _selectedMatch;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<MatchProvider>(context, listen: false);
+      provider.loadMatches();
+      if (provider.matches.isNotEmpty) {
+        setState(() {
+          _selectedMatch = provider.matches.first;
+        });
+      }
+    });
+  }
+
+  void _showMatchSummaryDialog(BuildContext context, Match match) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _cardDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [_primaryGold, _accentAmber],
+          ).createShader(bounds),
+          child: Text(
+            'DETAILED MATCH SUMMARY',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSummaryRow('Teams', '${match.teamA} vs ${match.teamB}'),
+              SizedBox(height: 12),
+              _buildSummaryRow('Score', '${match.scoreA} - ${match.scoreB}'),
+              SizedBox(height: 12),
+              _buildSummaryRow(
+                'Date',
+                '${match.matchDate.day}/${match.matchDate.month}/${match.matchDate.year}',
+              ),
+              SizedBox(height: 12),
+              _buildSummaryRow(
+                'Winner',
+                match.scoreA > match.scoreB
+                    ? match.teamA
+                    : match.scoreB > match.scoreA
+                        ? match.teamB
+                        : 'Draw',
+              ),
+              SizedBox(height: 12),
+              _buildSummaryRow('Total Goals', '${match.scoreA + match.scoreB}'),
+              if (match.notes != null && match.notes!.isNotEmpty) ...[
+                SizedBox(height: 12),
+                Divider(color: _textSecondary.withOpacity(0.2)),
+                SizedBox(height: 12),
+                Text(
+                  'Notes:',
+                  style: TextStyle(
+                    color: _primaryGold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  match.notes!,
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Close',
+              style: TextStyle(color: _primaryGold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: _textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: _textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -880,7 +1153,12 @@ class MatchAnalysisPage extends StatelessWidget {
                       child: _buildEventCard(context, i),
                     )),
                 SizedBox(height: 28),
-                _buildAdvancedChartsButton(context),
+                Consumer<MatchProvider>(
+                  builder: (context, provider, child) {
+                    final match = _selectedMatch ?? (provider.matches.isNotEmpty ? provider.matches.first : null);
+                    return _buildAdvancedChartsButton(context, match, provider.matches);
+                  },
+                ),
                 SizedBox(height: 28),
               ]),
             ),
@@ -891,9 +1169,26 @@ class MatchAnalysisPage extends StatelessWidget {
   }
 
   Widget _buildMatchSummaryCard(BuildContext context) {
-    return ModernCard(
-      padding: EdgeInsets.all(28),
-      child: Column(
+    return Consumer<MatchProvider>(
+      builder: (context, provider, child) {
+        final match = _selectedMatch ?? (provider.matches.isNotEmpty ? provider.matches.first : null);
+        
+        if (match == null) {
+          return ModernCard(
+            padding: EdgeInsets.all(28),
+            child: Center(
+              child: Text(
+                'No matches available',
+                style: TextStyle(color: _textSecondary),
+              ),
+            ),
+          );
+        }
+
+        return ModernCard(
+          padding: EdgeInsets.all(28),
+          onTap: () => _showMatchSummaryDialog(context, match),
+          child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -930,7 +1225,9 @@ class MatchAnalysisPage extends StatelessWidget {
           SizedBox(height: 20),
           _buildStatRow('Pass Accuracy', '78%', '82%', 48),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1087,7 +1384,7 @@ class MatchAnalysisPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAdvancedChartsButton(BuildContext context) {
+  Widget _buildAdvancedChartsButton(BuildContext context, Match? match, List<Match> allMatches) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1113,13 +1410,12 @@ class MatchAnalysisPage extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Opening advanced charts...'),
-                backgroundColor: _primaryGold,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChartsPage(
+                  match: match,
+                  allMatches: allMatches,
                 ),
               ),
             );
@@ -1637,7 +1933,199 @@ class _LiveStatsPageState extends State<LiveStatsPage>
 }
 
 // ----------------- Profile Page -----------------
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String? _profileImagePath;
+
+  Future<void> _pickImage() async {
+    try {
+      final imagePicker = ImagePicker();
+      final pickedFile = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _profileImagePath = kIsWeb ? pickedFile.path : pickedFile.path;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: _darkBackground),
+                SizedBox(width: 12),
+                Text('Profile photo updated!'),
+              ],
+            ),
+            backgroundColor: _primaryGold,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error, color: _textPrimary),
+              SizedBox(width: 12),
+              Text('Failed to pick image: $e'),
+            ],
+          ),
+          backgroundColor: Colors.red[700],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _takePhoto() async {
+    try {
+      final imagePicker = ImagePicker();
+      final pickedFile = await imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _profileImagePath = kIsWeb ? pickedFile.path : pickedFile.path;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: _darkBackground),
+                SizedBox(width: 12),
+                Text('Profile photo updated!'),
+              ],
+            ),
+            backgroundColor: _primaryGold,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error, color: _textPrimary),
+              SizedBox(width: 12),
+              Text('Failed to take photo: $e'),
+            ],
+          ),
+          backgroundColor: Colors.red[700],
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _cardDark,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select Image Source',
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildImageSourceOption(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Camera',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _takePhoto();
+                  },
+                ),
+                _buildImageSourceOption(
+                  icon: Icons.photo_library_rounded,
+                  label: 'Gallery',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage();
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: _cardDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _primaryGold.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: _primaryGold, size: 40),
+            SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: _textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -1696,35 +2184,111 @@ class ProfilePage extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 140,
-          height: 140,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_primaryGold, _accentAmber],
+        GestureDetector(
+          onTap: _showImageSourceDialog,
+          child: Stack(
+            children: [
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [_primaryGold, _accentAmber],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _primaryGold.withOpacity(0.6),
+                      blurRadius: 35,
+                      offset: Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: _primaryGold.withOpacity(0.4),
+                      blurRadius: 70,
+                      offset: Offset(0, 0),
+                    ),
+                  ],
+                ),
+                child: _profileImagePath != null
+                    ? ClipOval(
+                        child: kIsWeb
+                            ? Image.network(
+                                _profileImagePath!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.person_rounded,
+                                      size: 70,
+                                      color: _darkBackground,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.file(
+                                File(_profileImagePath!),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.person_rounded,
+                                      size: 70,
+                                      color: _darkBackground,
+                                    ),
+                                  );
+                                },
+                              ),
+                      )
+                    : Center(
+                        child: Icon(
+                          Icons.person_rounded,
+                          size: 70,
+                          color: _darkBackground,
+                        ),
+                      ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: _primaryGold.withOpacity(0.6),
-                  blurRadius: 35,
-                  offset: Offset(0, 10),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_primaryGold, _accentAmber],
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _darkBackground,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primaryGold.withOpacity(0.5),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    color: _darkBackground,
+                    size: 20,
+                  ),
                 ),
-                BoxShadow(
-                  color: _primaryGold.withOpacity(0.4),
-                  blurRadius: 70,
-                  offset: Offset(0, 0),
-                ),
-              ],
-            ),
-          child: Center(
-            child: Icon(
-              Icons.person_rounded,
-              size: 70,
-              color: _darkBackground,
-            ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 12),
+        Text(
+          'Tap to change photo',
+          style: TextStyle(
+            color: _textSecondary,
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
           ),
         ),
         SizedBox(height: 24),
@@ -1758,20 +2322,25 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildStatCards(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard('Matches', '24', Icons.sports_soccer_rounded),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard('Analysis', '18', Icons.analytics_rounded),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard('Live', '6', Icons.live_tv_rounded),
-        ),
-      ],
+    return Consumer<MatchProvider>(
+      builder: (context, matchProvider, child) {
+        final matchCount = matchProvider.matches.length;
+        return Row(
+          children: [
+            Expanded(
+              child: _buildStatCard('Matches', matchCount.toString(), Icons.sports_soccer_rounded),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard('Analysis', matchCount.toString(), Icons.analytics_rounded),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard('Live', '0', Icons.live_tv_rounded),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1829,14 +2398,10 @@ class ProfilePage extends StatelessWidget {
           icon: Icons.settings_rounded,
           title: 'Settings',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Settings (demo)'),
-                backgroundColor: _primaryGold,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingsPage(),
               ),
             );
           },
@@ -1847,14 +2412,10 @@ class ProfilePage extends StatelessWidget {
           icon: Icons.history_rounded,
           title: 'Match History',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Match History (demo)'),
-                backgroundColor: _primaryGold,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MatchHistoryPage(),
               ),
             );
           },
@@ -1865,14 +2426,10 @@ class ProfilePage extends StatelessWidget {
           icon: Icons.info_rounded,
           title: 'About',
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('GoalSight - AI Football Analysis System'),
-                backgroundColor: _primaryGold,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AboutPage(),
               ),
             );
           },
