@@ -10,6 +10,8 @@ import 'pages/match_history_page.dart';
 import 'pages/about_page.dart';
 import 'pages/charts_page.dart';
 import 'models/match.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'firebase_options.dart';
 
 // Premium Luxury Color Palette
 const Color _primaryGold = Color(0xFFFFD700); // Rich Gold
@@ -21,8 +23,7 @@ const Color _cardLighter = Color(0xFF252530); // Lighter Dark Blue-Gray
 const Color _textPrimary = Color(0xFFFFFFFF);
 const Color _textSecondary = Color(0xFFB8B8C8);
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
   runApp(GoalSightApp());
 }
 

@@ -13,7 +13,7 @@ class ChartsPage extends StatelessWidget {
   final Match? match;
   final List<Match>? allMatches;
 
-  ChartsPage({this.match, this.allMatches});
+  const ChartsPage({super.key, this.match, this.allMatches});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +23,10 @@ class ChartsPage extends StatelessWidget {
       return Scaffold(
         backgroundColor: _darkBackground,
         appBar: AppBar(
-          title: Text('Charts', style: TextStyle(color: _textPrimary)),
+          title: const Text('Charts', style: TextStyle(color: _textPrimary)),
           backgroundColor: Colors.transparent,
         ),
-        body: Center(
+        body: const Center(
           child: Text(
             'No match data available',
             style: TextStyle(color: _textSecondary),
@@ -39,10 +39,10 @@ class ChartsPage extends StatelessWidget {
       backgroundColor: _darkBackground,
       appBar: AppBar(
         title: ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
+          shaderCallback: (bounds) => const LinearGradient(
             colors: [_primaryGold, _accentAmber],
           ).createShader(bounds),
-          child: Text(
+          child: const Text(
             'ADVANCED CHARTS',
             style: TextStyle(
               color: Colors.white,
@@ -57,7 +57,7 @@ class ChartsPage extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               if (match != null) _buildSingleMatchCharts(match!),
@@ -84,7 +84,7 @@ class ChartsPage extends StatelessWidget {
                     color: _primaryGold,
                     title: '${match.teamA}\n${match.scoreA}',
                     radius: 80,
-                    titleStyle: TextStyle(
+                    titleStyle: const TextStyle(
                       color: _darkBackground,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -95,7 +95,7 @@ class ChartsPage extends StatelessWidget {
                     color: _accentAmber,
                     title: '${match.teamB}\n${match.scoreB}',
                     radius: 80,
-                    titleStyle: TextStyle(
+                    titleStyle: const TextStyle(
                       color: _darkBackground,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -108,7 +108,7 @@ class ChartsPage extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         _buildChartCard(
           title: 'Score Comparison',
           child: SizedBox(
@@ -124,23 +124,23 @@ class ChartsPage extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        if (value.toInt() == 1) return Text(match.teamA, style: TextStyle(color: _textSecondary, fontSize: 12));
-                        if (value.toInt() == 2) return Text(match.teamB, style: TextStyle(color: _textSecondary, fontSize: 12));
-                        return Text('', style: TextStyle(color: _textSecondary, fontSize: 12));
+                        if (value.toInt() == 1) return Text(match.teamA, style: const TextStyle(color: _textSecondary, fontSize: 12));
+                        if (value.toInt() == 2) return Text(match.teamB, style: const TextStyle(color: _textSecondary, fontSize: 12));
+                        return const Text('', style: TextStyle(color: _textSecondary, fontSize: 12));
                       },
                       reservedSize: 40,
                     ),
                   ),
-                  leftTitles: AxisTitles(
+                  leftTitles: const AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 40,
                     ),
                   ),
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
-                  rightTitles: AxisTitles(
+                  rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                 ),
@@ -153,7 +153,7 @@ class ChartsPage extends StatelessWidget {
                         toY: match.scoreA.toDouble(),
                         color: _primaryGold,
                         width: 40,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                       ),
                     ],
                   ),
@@ -164,7 +164,7 @@ class ChartsPage extends StatelessWidget {
                         toY: match.scoreB.toDouble(),
                         color: _accentAmber,
                         width: 40,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                       ),
                     ],
                   ),
@@ -190,7 +190,7 @@ class ChartsPage extends StatelessWidget {
 
     return Column(
       children: [
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         _buildChartCard(
           title: 'Total Goals by Team',
           child: SizedBox(
@@ -211,23 +211,23 @@ class ChartsPage extends StatelessWidget {
                           final teamName = sortedTeams[index].key.length > 8
                               ? sortedTeams[index].key.substring(0, 8)
                               : sortedTeams[index].key;
-                          return Text(teamName, style: TextStyle(color: _textSecondary, fontSize: 10));
+                          return Text(teamName, style: const TextStyle(color: _textSecondary, fontSize: 10));
                         }
-                        return Text('', style: TextStyle(color: _textSecondary, fontSize: 10));
+                        return const Text('', style: TextStyle(color: _textSecondary, fontSize: 10));
                       },
                       reservedSize: 50,
                     ),
                   ),
-                  leftTitles: AxisTitles(
+                  leftTitles: const AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 40,
                     ),
                   ),
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
-                  rightTitles: AxisTitles(
+                  rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                 ),
@@ -240,7 +240,7 @@ class ChartsPage extends StatelessWidget {
                         toY: entry.value.value.toDouble(),
                         color: entry.key % 2 == 0 ? _primaryGold : _accentAmber,
                         width: 30,
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                       ),
                     ],
                   );
@@ -249,7 +249,7 @@ class ChartsPage extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         _buildChartCard(
           title: 'Goals Distribution',
           child: SizedBox(
@@ -263,7 +263,7 @@ class ChartsPage extends StatelessWidget {
                     color: index % 2 == 0 ? _primaryGold : _accentAmber,
                     title: '${entry.key}\n${entry.value}',
                     radius: 60,
-                    titleStyle: TextStyle(
+                    titleStyle: const TextStyle(
                       color: _darkBackground,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -282,7 +282,7 @@ class ChartsPage extends StatelessWidget {
 
   Widget _buildChartCard({required String title, required Widget child}) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _cardDark,
         borderRadius: BorderRadius.circular(20),
@@ -294,7 +294,7 @@ class ChartsPage extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -303,13 +303,13 @@ class ChartsPage extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: _textPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           child,
         ],
       ),

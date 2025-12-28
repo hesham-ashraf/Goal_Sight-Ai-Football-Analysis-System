@@ -11,6 +11,8 @@ const Color _textPrimary = Color(0xFFFFFFFF);
 const Color _textSecondary = Color(0xFFB8B8C8);
 
 class AddMatchPage extends StatefulWidget {
+  const AddMatchPage({super.key});
+
   @override
   _AddMatchPageState createState() => _AddMatchPageState();
 }
@@ -44,7 +46,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+            colorScheme: const ColorScheme.dark(
               primary: _primaryGold,
               onPrimary: _darkBackground,
               surface: _cardDark,
@@ -92,7 +94,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
+          content: const Row(
             children: [
               Icon(Icons.check_circle, color: _darkBackground),
               SizedBox(width: 12),
@@ -104,7 +106,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
       Navigator.of(context).pop();
@@ -113,8 +115,8 @@ class _AddMatchPageState extends State<AddMatchPage> {
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error, color: _textPrimary),
-              SizedBox(width: 12),
+              const Icon(Icons.error, color: _textPrimary),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   provider.error ?? 'Failed to add match. Please try again.',
@@ -127,7 +129,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     }
@@ -139,10 +141,10 @@ class _AddMatchPageState extends State<AddMatchPage> {
       backgroundColor: _darkBackground,
       appBar: AppBar(
         title: ShaderMask(
-          shaderCallback: (bounds) => LinearGradient(
+          shaderCallback: (bounds) => const LinearGradient(
             colors: [_primaryGold, _accentAmber],
           ).createShader(bounds),
-          child: Text(
+          child: const Text(
             'ADD NEW MATCH',
             style: TextStyle(
               color: Colors.white,
@@ -180,14 +182,14 @@ class _AddMatchPageState extends State<AddMatchPage> {
             ),
           ),
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeaderSection(),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   _buildTextField(
                     controller: _teamAController,
                     label: 'Team A',
@@ -199,7 +201,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
                       return null;
                     },
                   ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField(
                   controller: _teamBController,
                   label: 'Team B',
@@ -215,7 +217,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
                     return null;
                   },
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
@@ -236,7 +238,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
                         },
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: _buildTextField(
                         controller: _scoreBController,
@@ -257,18 +259,18 @@ class _AddMatchPageState extends State<AddMatchPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildDatePicker(),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildTextField(
                   controller: _notesController,
                   label: 'Notes (Optional)',
                   icon: Icons.note,
                   maxLines: 3,
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
                 _buildSubmitButton(),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -280,7 +282,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
 
   Widget _buildHeaderSection() {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [_primaryGold.withOpacity(0.15), _accentAmber.withOpacity(0.1)],
@@ -296,9 +298,9 @@ class _AddMatchPageState extends State<AddMatchPage> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [_primaryGold, _accentAmber],
               ),
               borderRadius: BorderRadius.circular(16),
@@ -306,14 +308,14 @@ class _AddMatchPageState extends State<AddMatchPage> {
                 BoxShadow(
                   color: _primaryGold.withOpacity(0.4),
                   blurRadius: 12,
-                  offset: Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(Icons.add_circle_rounded, color: _darkBackground, size: 32),
+            child: const Icon(Icons.add_circle_rounded, color: _darkBackground, size: 32),
           ),
-          SizedBox(width: 16),
-          Expanded(
+          const SizedBox(width: 16),
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -361,7 +363,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -370,22 +372,22 @@ class _AddMatchPageState extends State<AddMatchPage> {
         keyboardType: keyboardType,
         maxLines: maxLines,
         validator: validator,
-        style: TextStyle(color: _textPrimary),
+        style: const TextStyle(color: _textPrimary),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: _textSecondary),
+          labelStyle: const TextStyle(color: _textSecondary),
           prefixIcon: Icon(icon, color: _primaryGold),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red, width: 1),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red, width: 2),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
           ),
         ),
       ),
@@ -405,7 +407,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -413,25 +415,25 @@ class _AddMatchPageState extends State<AddMatchPage> {
         onTap: () => _selectDate(context),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: _primaryGold),
-              SizedBox(width: 16),
+              const Icon(Icons.calendar_today, color: _primaryGold),
+              const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Match Date',
                     style: TextStyle(
                       color: _textSecondary,
                       fontSize: 12,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: _textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -449,7 +451,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
   Widget _buildSubmitButton() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [_primaryGold, _accentAmber],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -459,12 +461,12 @@ class _AddMatchPageState extends State<AddMatchPage> {
           BoxShadow(
             color: _primaryGold.withOpacity(0.5),
             blurRadius: 24,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
           BoxShadow(
             color: _primaryGold.withOpacity(0.3),
             blurRadius: 40,
-            offset: Offset(0, 0),
+            offset: const Offset(0, 0),
           ),
         ],
       ),
@@ -474,10 +476,10 @@ class _AddMatchPageState extends State<AddMatchPage> {
           onTap: _isSubmitting ? null : _submitForm,
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
-            duration: Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(vertical: 20),
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 20),
             child: _isSubmitting
-                ? Center(
+                ? const Center(
                     child: SizedBox(
                       width: 28,
                       height: 28,
@@ -487,7 +489,7 @@ class _AddMatchPageState extends State<AddMatchPage> {
                       ),
                     ),
                   )
-                : Row(
+                : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_circle_rounded, color: _darkBackground, size: 26),
